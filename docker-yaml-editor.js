@@ -1909,7 +1909,7 @@
 
             // Check for key documentation
             const lines = this._value.split('\n');
-            if (line <= lines.length) {
+            if (line >= 1 && line <= lines.length) {
                 const lineText = lines[line - 1];
                 const keyMatch = lineText.match(/^\s*-?\s*([a-zA-Z_][a-zA-Z0-9_.-]*)\s*:/);
                 if (keyMatch) {
