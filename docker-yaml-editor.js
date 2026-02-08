@@ -1856,7 +1856,7 @@
             const afterCursor = this._value.slice(pos);
 
             // Find what's already typed
-            const match = beforeCursor.match(/[a-zA-Z_\-\.0-9]*$/);
+            const match = beforeCursor.match(/[a-zA-Z0-9_.-]*$/);
             const typed = match ? match[0] : '';
             const insertStart = pos - typed.length;
 
@@ -1911,7 +1911,7 @@
             const lines = this._value.split('\n');
             if (line <= lines.length) {
                 const lineText = lines[line - 1];
-                const keyMatch = lineText.match(/^\s*-?\s*([a-zA-Z_][a-zA-Z0-9_\-\.]*)\s*:/);
+                const keyMatch = lineText.match(/^\s*-?\s*([a-zA-Z_][a-zA-Z0-9_.-]*)\s*:/);
                 if (keyMatch) {
                     const key = keyMatch[1];
                     const keyStart = lineText.indexOf(key);
