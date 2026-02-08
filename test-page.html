@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker YAML Editor - Test Page</title>
+    <link rel="stylesheet" href="docker-yaml-editor.css">
+    <style>
+        :root {
+            --bg: #f6f8fa;
+            --surface: #ffffff;
+            --text: #24292f;
+            --text-secondary: #57606a;
+            --border: #d0d7de;
+            --primary: #0969da;
+            --success: #1a7f37;
+            --error: #cf222e;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0d1117;
+                --surface: #161b22;
+                --text: #c9d1d9;
+                --text-secondary: #8b949e;
+                --border: #30363d;
+                --primary: #388bfd;
+                --success: #3fb950;
+                --error: #f85149;
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--surface);
+            color: var(--text);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        button:hover {
+            background: var(--bg);
+            border-color: var(--text-secondary);
+        }
+
+        button.primary {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        button.primary:hover {
+            opacity: 0.9;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .editor-container {
+            background: var(--surface);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .editor-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-badge.valid {
+            background: rgba(26, 127, 55, 0.1);
+            color: var(--success);
+        }
+
+        .status-badge.invalid {
+            background: rgba(207, 34, 46, 0.1);
+            color: var(--error);
+        }
+
+        .status-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        #editor {
+            min-height: 400px;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .panel {
+            background: var(--surface);
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid var(--border);
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .error-count {
+            background: var(--error);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+
+        .error-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .error-item {
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            background: rgba(207, 34, 46, 0.05);
+            border-left: 3px solid var(--error);
+            border-radius: 0 4px 4px 0;
+            font-size: 12px;
+        }
+
+        .error-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .error-line {
+            color: var(--text-secondary);
+            font-size: 11px;
+            margin-bottom: 2px;
+        }
+
+        .error-message {
+            color: var(--error);
+        }
+
+        .no-errors {
+            color: var(--success);
+            text-align: center;
+            padding: 20px;
+        }
+
+        .theme-toggle {
+            display: flex;
+            gap: 5px;
+        }
+
+        .theme-toggle button {
+            padding: 4px 10px;
+            font-size: 12px;
+        }
+
+        .theme-toggle button.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .sample-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .sample-buttons button {
+            text-align: left;
+            font-size: 12px;
+        }
+
+        .log-panel {
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 11px;
+            max-height: 150px;
+            overflow-y: auto;
+            background: var(--bg);
+            border-radius: 4px;
+            padding: 8px;
+        }
+
+        .log-entry {
+            padding: 3px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .log-time {
+            color: var(--text-secondary);
+        }
+
+        .log-event {
+            color: var(--primary);
+        }
+
+        .api-panel {
+            font-size: 12px;
+        }
+
+        .api-panel code {
+            background: var(--bg);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'SF Mono', Monaco, monospace;
+        }
+
+        .api-test {
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .api-test button {
+            font-size: 11px;
+            padding: 4px 8px;
+        }
+
+        .output-box {
+            margin-top: 10px;
+            padding: 10px;
+            background: var(--bg);
+            border-radius: 4px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 11px;
+            max-height: 150px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            display: none;
+        }
+
+        .output-box.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Docker YAML Editor Test Page</h1>
+            <div class="controls">
+                <button onclick="clearEditor()">Clear</button>
+                <button onclick="exportYaml()" class="primary">Export YAML</button>
+            </div>
+        </header>
+
+        <div class="main-layout">
+            <div class="editor-container">
+                <div class="editor-header">
+                    <span class="editor-title">Docker Compose Editor</span>
+                    <span id="status-badge" class="status-badge valid">Valid</span>
+                </div>
+                <div id="editor"></div>
+            </div>
+
+            <div class="sidebar">
+                <!-- Theme Toggle -->
+                <div class="panel">
+                    <div class="panel-title">Theme</div>
+                    <div class="theme-toggle">
+                        <button onclick="setTheme('light')">Light</button>
+                        <button onclick="setTheme('dark')">Dark</button>
+                        <button onclick="setTheme('auto')" class="active">Auto</button>
+                    </div>
+                </div>
+
+                <!-- Sample Files -->
+                <div class="panel">
+                    <div class="panel-title">Sample Compose Files</div>
+                    <div class="sample-buttons">
+                        <button onclick="loadSample('basic')">Basic Web App</button>
+                        <button onclick="loadSample('fullstack')">Full Stack App</button>
+                        <button onclick="loadSample('swarm')">Swarm Stack</button>
+                        <button onclick="loadSample('realStack')">Real Production Stack</button>
+                        <button onclick="loadSample('wrongIndent')">Wrong Indentation</button>
+                        <button onclick="loadSample('invalid')">Invalid (Test Errors)</button>
+                    </div>
+                </div>
+
+                <!-- Errors Panel -->
+                <div class="panel">
+                    <div class="panel-title">
+                        Validation Errors
+                        <span id="error-count" class="error-count" style="display: none;">0</span>
+                    </div>
+                    <div id="error-list" class="error-list">
+                        <div class="no-errors">No errors</div>
+                    </div>
+                </div>
+
+                <!-- Event Log -->
+                <div class="panel">
+                    <div class="panel-title">Event Log</div>
+                    <div id="event-log" class="log-panel"></div>
+                </div>
+
+                <!-- API Testing -->
+                <div class="panel api-panel">
+                    <div class="panel-title">API Testing</div>
+                    <p>Test the editor's public API:</p>
+                    <div class="api-test">
+                        <button onclick="testGetValue()">getValue()</button>
+                        <button onclick="testIsValid()">isValid</button>
+                        <button onclick="testGetErrors()">getErrors()</button>
+                        <button onclick="testFocus()">focus()</button>
+                    </div>
+                    <div id="api-output" class="output-box"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="docker-yaml-editor.js"></script>
+    <script>
+        // Initialize editor
+        let editor;
+        let currentTheme = 'auto';
+
+        // Sample compose files
+        const samples = {
+            basic: `version: "3.8"
+
+services:
+  web:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./html:/usr/share/nginx/html:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+`,
+            fullstack: `version: "3.8"
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - API_URL=http://api:8080
+    depends_on:
+      - api
+    networks:
+      - frontend-net
+      - backend-net
+
+  api:
+    build: ./api
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: postgres://user:pass@db:5432/app
+      REDIS_URL: redis://cache:6379
+    depends_on:
+      - db
+      - cache
+    networks:
+      - backend-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  db:
+    image: postgres:14-alpine
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: app
+    networks:
+      - backend-net
+
+  cache:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - backend-net
+
+networks:
+  frontend-net:
+    driver: bridge
+  backend-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:
+`,
+            swarm: `version: "3.8"
+
+services:
+  web:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    deploy:
+      mode: replicated
+      replicas: 3
+      placement:
+        constraints:
+          - node.role == worker
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        order: start-first
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      labels:
+        - "traefik.enable=true"
+    networks:
+      - webnet
+    configs:
+      - source: nginx_config
+        target: /etc/nginx/nginx.conf
+    secrets:
+      - ssl_certificate
+      - ssl_key
+
+  visualizer:
+    image: dockersamples/visualizer:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      replicas: 1
+
+networks:
+  webnet:
+    driver: overlay
+    attachable: true
+
+configs:
+  nginx_config:
+    file: ./nginx.conf
+
+secrets:
+  ssl_certificate:
+    file: ./certs/cert.pem
+  ssl_key:
+    file: ./certs/key.pem
+`,
+            invalid: `version: "2.5"
+
+services:
+  web:
+    imge: nginx:latest
+    pots:
+      - "80:80"
+    enivronment:
+      - DEBUG=true
+    dploy:
+      replicas: 3
+    unknownkey: value
+    restart: sometimes
+
+  database:
+    logging:
+      driver: unknown-driver
+
+networks:
+  mynet:
+    driverr: overlay
+
+volumes:
+  data:
+    drivr: local
+`,
+            realStack: `version: "3.9"
+
+services:
+  dockermanager:
+    image: ghcr.io/powernet-git/tcx-dockermanager:v1.0.13
+    deploy:
+      mode: global
+      update_config:
+        parallelism: 2
+        delay: 1s
+        order: start-first
+        failure_action: rollback
+      rollback_config:
+        parallelism: 2
+        delay: 1s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      labels:
+        # Traefik labels for external access
+        - "traefik.enable=true"
+        - "traefik.http.routers.dockermanager.rule=Host(\\\`dockermanager.telecomx.dk\\\`)"
+        - "traefik.http.routers.dockermanager.entrypoints=websecure"
+        - "traefik.http.routers.dockermanager.tls.certresolver=le-dns"
+        # Restrict access to 62.192.160.0/24
+        - "traefik.http.routers.dockermanager.middlewares=dockermanager-ipallowlist"
+        - "traefik.http.middlewares.dockermanager-ipallowlist.ipallowlist.sourcerange=62.192.160.0/24"
+        # Service listens on port 80
+        - "traefik.http.services.dockermanager.loadbalancer.server.port=80"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+    networks:
+      - traefik_public
+      - internal
+    environment:
+      - PORT=80
+      - NODE_HOSTNAME={{.Node.Hostname}}
+      - SERVICE_NAME=dockermanager_dockermanager
+      - LOG_LEVEL=info
+    secrets:
+      - dockermanager_api_auth_token
+      - ghcr_username
+      - ghcr_token
+
+networks:
+  traefik_public:
+    external: true
+    name: traefik_traefik_public
+  internal:
+    driver: overlay
+    attachable: true
+    driver_opts:
+      com.docker.network.driver.mtu: "1450"
+
+secrets:
+  dockermanager_api_auth_token:
+    external: true
+  ghcr_username:
+    external: true
+  ghcr_token:
+    external: true
+`,
+            wrongIndent: `version: "3.9"
+
+services:
+  web:
+    image: nginx:alpine
+   ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+
+# These are at wrong level (should be under a service)
+image: redis:alpine
+ports:
+  - "6379:6379"
+deploy:
+  replicas: 3
+
+# These should be under deploy
+replicas: 5
+mode: global
+`
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            editor = DockerYamlEditor.init('#editor', {
+                theme: 'auto',
+                initialValue: samples.basic
+            });
+
+            // Listen for changes
+            editor.on('change', (data) => {
+                logEvent('change', `isValid: ${data.isValid}`);
+                updateStatus(data.isValid);
+            });
+
+            // Listen for validation
+            editor.on('validate', (data) => {
+                logEvent('validate', `${data.errors.length} error(s)`);
+                updateErrors(data.errors);
+            });
+
+            // Initial status
+            updateStatus(editor.isValid);
+            updateErrors(editor.getErrors());
+        });
+
+        // Theme control
+        function setTheme(theme) {
+            currentTheme = theme;
+            editor.setTheme(theme);
+
+            // Update buttons
+            document.querySelectorAll('.theme-toggle button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            logEvent('theme', `Set to: ${theme}`);
+        }
+
+        // Load sample
+        function loadSample(name) {
+            if (samples[name]) {
+                editor.setValue(samples[name]);
+                logEvent('load', `Loaded sample: ${name}`);
+            }
+        }
+
+        // Clear editor
+        function clearEditor() {
+            editor.setValue('');
+            logEvent('clear', 'Editor cleared');
+        }
+
+        // Export YAML
+        function exportYaml() {
+            const yaml = editor.getValue();
+            const blob = new Blob([yaml], { type: 'text/yaml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'docker-compose.yml';
+            a.click();
+            URL.revokeObjectURL(url);
+            logEvent('export', 'YAML exported');
+        }
+
+        // Update status badge
+        function updateStatus(isValid) {
+            const badge = document.getElementById('status-badge');
+            badge.className = `status-badge ${isValid ? 'valid' : 'invalid'}`;
+            badge.textContent = isValid ? 'Valid' : 'Invalid';
+        }
+
+        // Update errors list
+        function updateErrors(errors) {
+            const countEl = document.getElementById('error-count');
+            const listEl = document.getElementById('error-list');
+
+            if (errors.length === 0) {
+                countEl.style.display = 'none';
+                listEl.innerHTML = '<div class="no-errors">No errors</div>';
+            } else {
+                countEl.style.display = 'inline';
+                countEl.textContent = errors.length;
+                listEl.innerHTML = errors.map(err => `
+                    <div class="error-item">
+                        <div class="error-line">Line ${err.line}${err.column ? `, Column ${err.column}` : ''}</div>
+                        <div class="error-message">${escapeHtml(err.message)}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Event logging
+        function logEvent(type, message) {
+            const log = document.getElementById('event-log');
+            const time = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-time">${time}</span> <span class="log-event">${type}</span>: ${escapeHtml(message)}`;
+            log.insertBefore(entry, log.firstChild);
+
+            // Keep only last 20 entries
+            while (log.children.length > 20) {
+                log.removeChild(log.lastChild);
+            }
+        }
+
+        // API testing
+        function testGetValue() {
+            const value = editor.getValue();
+            showOutput('getValue() =>\n' + (value || '(empty)'));
+        }
+
+        function testIsValid() {
+            showOutput('isValid => ' + editor.isValid);
+        }
+
+        function testGetErrors() {
+            const errors = editor.getErrors();
+            showOutput('getErrors() => ' + JSON.stringify(errors, null, 2));
+        }
+
+        function testFocus() {
+            editor.focus();
+            showOutput('focus() called - editor should be focused');
+        }
+
+        function showOutput(text) {
+            const output = document.getElementById('api-output');
+            output.textContent = text;
+            output.classList.add('visible');
+        }
+
+        // Utility
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Console integration
+        window.editor = null;
+        setTimeout(() => {
+            window.editor = editor;
+            console.log('%cDocker YAML Editor loaded!', 'color: #0969da; font-weight: bold;');
+            console.log('Access the editor instance via: window.editor');
+            console.log('Available methods: getValue(), setValue(yaml), isValid, getErrors(), on(event, callback), setTheme(theme), focus(), destroy()');
+        }, 100);
+    </script>
+</body>
+</html>

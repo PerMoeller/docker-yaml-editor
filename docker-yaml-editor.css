@@ -1,0 +1,616 @@
+/**
+ * Docker YAML Editor Styles
+ * Supports light and dark themes with auto-detection
+ */
+
+/* ============================================
+   CSS CUSTOM PROPERTIES (THEMING)
+   ============================================ */
+
+.docker-yaml-editor {
+    --dye-font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', 'Courier New', monospace;
+    --dye-font-size: 14px;
+    --dye-line-height: 20px;
+    --dye-gutter-width: 50px;
+    --dye-padding: 8px;
+    --dye-border-radius: 6px;
+    --dye-transition: 0.2s ease;
+}
+
+/* Light Theme */
+.docker-yaml-editor.dye-theme-light {
+    --dye-bg: #ffffff;
+    --dye-bg-gutter: #f6f8fa;
+    --dye-border: #d0d7de;
+    --dye-text: #24292f;
+    --dye-text-gutter: #8b949e;
+    --dye-text-selection: #0969da20;
+
+    /* Syntax colors */
+    --dye-key: #0550ae;
+    --dye-value-string: #0a3069;
+    --dye-value-number: #0550ae;
+    --dye-value-boolean: #cf222e;
+    --dye-value-null: #8250df;
+    --dye-comment: #6e7781;
+    --dye-colon: #24292f;
+    --dye-list-marker: #cf222e;
+    --dye-value-quoted: #0a3069;
+    --dye-value-multiline: #8250df;
+    --dye-value-inline: #0550ae;
+
+    /* Error colors */
+    --dye-error-bg: #ffebe9;
+    --dye-error-border: #ff8182;
+    --dye-error-text: #cf222e;
+    --dye-warning-bg: #fff8c5;
+    --dye-warning-border: #d4a72c;
+
+    /* Tooltip */
+    --dye-tooltip-bg: #24292f;
+    --dye-tooltip-text: #ffffff;
+    --dye-tooltip-border: #444c56;
+
+    /* Autocomplete */
+    --dye-ac-bg: #ffffff;
+    --dye-ac-border: #d0d7de;
+    --dye-ac-hover: #f6f8fa;
+    --dye-ac-selected: #0969da;
+    --dye-ac-selected-text: #ffffff;
+    --dye-ac-type: #8b949e;
+
+    /* Resize handle */
+    --dye-resize-handle: #d0d7de;
+    --dye-resize-handle-hover: #8b949e;
+}
+
+/* Dark Theme */
+.docker-yaml-editor.dye-theme-dark {
+    --dye-bg: #0d1117;
+    --dye-bg-gutter: #161b22;
+    --dye-border: #30363d;
+    --dye-text: #c9d1d9;
+    --dye-text-gutter: #6e7681;
+    --dye-text-selection: #388bfd40;
+
+    /* Syntax colors */
+    --dye-key: #79c0ff;
+    --dye-value-string: #a5d6ff;
+    --dye-value-number: #79c0ff;
+    --dye-value-boolean: #ff7b72;
+    --dye-value-null: #d2a8ff;
+    --dye-comment: #8b949e;
+    --dye-colon: #c9d1d9;
+    --dye-list-marker: #ff7b72;
+    --dye-value-quoted: #a5d6ff;
+    --dye-value-multiline: #d2a8ff;
+    --dye-value-inline: #79c0ff;
+
+    /* Error colors */
+    --dye-error-bg: #49070840;
+    --dye-error-border: #f85149;
+    --dye-error-text: #ff7b72;
+    --dye-warning-bg: #693e0050;
+    --dye-warning-border: #d29922;
+
+    /* Tooltip */
+    --dye-tooltip-bg: #2d333b;
+    --dye-tooltip-text: #c9d1d9;
+    --dye-tooltip-border: #444c56;
+
+    /* Autocomplete */
+    --dye-ac-bg: #21262d;
+    --dye-ac-border: #30363d;
+    --dye-ac-hover: #30363d;
+    --dye-ac-selected: #388bfd;
+    --dye-ac-selected-text: #ffffff;
+    --dye-ac-type: #8b949e;
+
+    /* Resize handle */
+    --dye-resize-handle: #30363d;
+    --dye-resize-handle-hover: #6e7681;
+}
+
+/* ============================================
+   MAIN CONTAINER
+   ============================================ */
+
+.docker-yaml-editor {
+    position: relative;
+    font-family: var(--dye-font-family);
+    font-size: var(--dye-font-size);
+    line-height: var(--dye-line-height);
+    border: 1px solid var(--dye-border);
+    border-radius: var(--dye-border-radius);
+    background: var(--dye-bg);
+    overflow: hidden;
+    transition: border-color var(--dye-transition), background-color var(--dye-transition);
+}
+
+.docker-yaml-editor:focus-within {
+    border-color: var(--dye-ac-selected);
+    outline: none;
+}
+
+/* ============================================
+   WRAPPER
+   ============================================ */
+
+.dye-wrapper {
+    display: flex;
+    position: relative;
+    height: 400px;
+    min-height: 100px;
+    overflow: hidden;
+}
+
+.dye-wrapper.dye-resizing {
+    user-select: none;
+}
+
+/* ============================================
+   GUTTER (LINE NUMBERS)
+   ============================================ */
+
+.dye-gutter {
+    flex-shrink: 0;
+    width: var(--dye-gutter-width);
+    background: var(--dye-bg-gutter);
+    border-right: 1px solid var(--dye-border);
+    padding: var(--dye-padding) 0;
+    overflow: hidden;
+    user-select: none;
+    transition: background-color var(--dye-transition), border-color var(--dye-transition);
+}
+
+.dye-gutter-line {
+    height: var(--dye-line-height);
+    padding-right: 12px;
+    text-align: right;
+    color: var(--dye-text-gutter);
+    box-sizing: border-box;
+}
+
+.dye-gutter-line.dye-gutter-error {
+    background: var(--dye-error-bg);
+    color: var(--dye-error-text);
+    position: relative;
+}
+
+.dye-gutter-line.dye-gutter-error::after {
+    content: '';
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    background: var(--dye-error-border);
+    border-radius: 50%;
+}
+
+/* ============================================
+   EDITOR AREA
+   ============================================ */
+
+.dye-editor-area {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+/* ============================================
+   SYNTAX HIGHLIGHT LAYER
+   ============================================ */
+
+.dye-highlight-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: var(--dye-padding);
+    overflow: auto;
+    pointer-events: all;
+    white-space: pre;
+    word-wrap: normal;
+    color: var(--dye-text);
+    transition: color var(--dye-transition);
+}
+
+.dye-line {
+    height: var(--dye-line-height);
+    display: block;
+}
+
+.dye-line.dye-line-error {
+    background: var(--dye-error-bg);
+    border-left: 3px solid var(--dye-error-border);
+    margin-left: -3px;
+    padding-left: 0;
+}
+
+/* Token styles */
+.dye-token {
+    /* Default */
+}
+
+.dye-indent,
+.dye-whitespace {
+    /* Preserve whitespace */
+}
+
+.dye-key {
+    color: var(--dye-key);
+    font-weight: 500;
+}
+
+.dye-colon {
+    color: var(--dye-colon);
+}
+
+.dye-value-string {
+    color: var(--dye-value-string);
+}
+
+.dye-value-number {
+    color: var(--dye-value-number);
+}
+
+.dye-value-boolean {
+    color: var(--dye-value-boolean);
+    font-weight: 500;
+}
+
+.dye-value-null {
+    color: var(--dye-value-null);
+    font-style: italic;
+}
+
+.dye-value-quoted {
+    color: var(--dye-value-quoted);
+}
+
+.dye-value-multiline {
+    color: var(--dye-value-multiline);
+}
+
+.dye-value-inline {
+    color: var(--dye-value-inline);
+}
+
+.dye-comment {
+    color: var(--dye-comment);
+    font-style: italic;
+}
+
+.dye-list-marker {
+    color: var(--dye-list-marker);
+    font-weight: bold;
+}
+
+/* ============================================
+   TEXTAREA (INPUT LAYER)
+   ============================================ */
+
+.dye-textarea {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    padding: var(--dye-padding);
+    margin: 0;
+    border: none;
+    outline: none;
+    resize: none;
+    background: transparent;
+    color: transparent;
+    caret-color: var(--dye-text);
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    white-space: pre;
+    word-wrap: normal;
+    overflow: auto;
+    box-sizing: border-box;
+}
+
+.dye-textarea::selection {
+    background: var(--dye-text-selection);
+}
+
+/* ============================================
+   RESIZE HANDLE
+   ============================================ */
+
+.dye-resize-handle {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    cursor: ns-resize;
+    background: linear-gradient(135deg, transparent 50%, var(--dye-resize-handle) 50%);
+    border-bottom-right-radius: var(--dye-border-radius);
+    transition: background var(--dye-transition);
+    z-index: 10;
+}
+
+.dye-resize-handle:hover {
+    background: linear-gradient(135deg, transparent 50%, var(--dye-resize-handle-hover) 50%);
+}
+
+.dye-resize-handle::before {
+    content: '';
+    position: absolute;
+    bottom: 3px;
+    right: 3px;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid var(--dye-resize-handle);
+    border-bottom: 2px solid var(--dye-resize-handle);
+}
+
+.dye-resize-handle:hover::before {
+    border-color: var(--dye-resize-handle-hover);
+}
+
+/* ============================================
+   TOOLTIP
+   ============================================ */
+
+.dye-tooltip {
+    position: fixed;
+    z-index: 10000;
+    max-width: 400px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 1.5;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    pointer-events: none;
+}
+
+/* Tooltip theme - light */
+.dye-tooltip.dye-theme-light {
+    background: #24292f;
+    color: #ffffff;
+    border: 1px solid #444c56;
+}
+
+.dye-tooltip.dye-theme-light .dye-tooltip-title {
+    color: #79c0ff;
+}
+
+.dye-tooltip.dye-theme-light .dye-tooltip-error {
+    color: #ff7b72;
+}
+
+/* Tooltip theme - dark */
+.dye-tooltip.dye-theme-dark {
+    background: #2d333b;
+    color: #c9d1d9;
+    border: 1px solid #444c56;
+}
+
+.dye-tooltip.dye-theme-dark .dye-tooltip-title {
+    color: #79c0ff;
+}
+
+.dye-tooltip.dye-theme-dark .dye-tooltip-error {
+    color: #ff7b72;
+}
+
+.dye-tooltip-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.dye-tooltip-desc {
+    margin-bottom: 6px;
+}
+
+.dye-tooltip-type {
+    font-size: 11px;
+    opacity: 0.8;
+    font-family: var(--dye-font-family);
+}
+
+.dye-tooltip-values {
+    font-size: 11px;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+    font-family: 'SF Mono', Monaco, monospace;
+    word-break: break-word;
+}
+
+.dye-tooltip-keys {
+    font-size: 11px;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+    font-family: 'SF Mono', Monaco, monospace;
+    word-break: break-word;
+}
+
+.dye-tooltip-example {
+    font-size: 11px;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+    font-family: 'SF Mono', Monaco, monospace;
+    opacity: 0.8;
+}
+
+.dye-tooltip-error {
+    font-weight: 500;
+}
+
+/* ============================================
+   AUTOCOMPLETE DROPDOWN
+   ============================================ */
+
+.dye-autocomplete {
+    position: fixed;
+    z-index: 10000;
+    min-width: 250px;
+    max-width: 450px;
+    max-height: 300px;
+    overflow-y: auto;
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+    font-size: 13px;
+}
+
+/* Autocomplete theme - light */
+.dye-autocomplete.dye-theme-light {
+    background: #ffffff;
+    border: 1px solid #d0d7de;
+}
+
+.dye-autocomplete.dye-theme-light .dye-autocomplete-item:hover {
+    background: #f6f8fa;
+}
+
+.dye-autocomplete.dye-theme-light .dye-autocomplete-item.selected {
+    background: #0969da;
+    color: #ffffff;
+}
+
+.dye-autocomplete.dye-theme-light .dye-ac-type {
+    color: #8b949e;
+}
+
+.dye-autocomplete.dye-theme-light .dye-autocomplete-item.selected .dye-ac-type {
+    color: rgba(255,255,255,0.8);
+}
+
+/* Autocomplete theme - dark */
+.dye-autocomplete.dye-theme-dark {
+    background: #21262d;
+    border: 1px solid #30363d;
+}
+
+.dye-autocomplete.dye-theme-dark .dye-autocomplete-item:hover {
+    background: #30363d;
+}
+
+.dye-autocomplete.dye-theme-dark .dye-autocomplete-item.selected {
+    background: #388bfd;
+    color: #ffffff;
+}
+
+.dye-autocomplete.dye-theme-dark .dye-ac-type {
+    color: #8b949e;
+}
+
+.dye-autocomplete.dye-theme-dark .dye-autocomplete-item.selected .dye-ac-type {
+    color: rgba(255,255,255,0.8);
+}
+
+.dye-autocomplete-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background-color 0.1s;
+}
+
+.dye-autocomplete-item:first-child {
+    border-radius: 5px 5px 0 0;
+}
+
+.dye-autocomplete-item:last-child {
+    border-radius: 0 0 5px 5px;
+}
+
+.dye-ac-label {
+    font-family: 'SF Mono', Monaco, monospace;
+    font-weight: 500;
+}
+
+.dye-ac-type {
+    font-size: 10px;
+    margin-left: 12px;
+    text-transform: uppercase;
+    opacity: 0.7;
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
+
+.dye-highlight-layer::-webkit-scrollbar,
+.dye-textarea::-webkit-scrollbar,
+.dye-gutter::-webkit-scrollbar,
+.dye-autocomplete::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.dye-highlight-layer::-webkit-scrollbar-track,
+.dye-textarea::-webkit-scrollbar-track,
+.dye-gutter::-webkit-scrollbar-track,
+.dye-autocomplete::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.dye-highlight-layer::-webkit-scrollbar-thumb,
+.dye-textarea::-webkit-scrollbar-thumb,
+.dye-gutter::-webkit-scrollbar-thumb,
+.dye-autocomplete::-webkit-scrollbar-thumb {
+    background: var(--dye-border);
+    border-radius: 4px;
+}
+
+.dye-highlight-layer::-webkit-scrollbar-thumb:hover,
+.dye-textarea::-webkit-scrollbar-thumb:hover,
+.dye-gutter::-webkit-scrollbar-thumb:hover,
+.dye-autocomplete::-webkit-scrollbar-thumb:hover {
+    background: var(--dye-text-gutter);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 600px) {
+    .docker-yaml-editor {
+        --dye-font-size: 13px;
+        --dye-gutter-width: 40px;
+    }
+
+    .dye-tooltip {
+        max-width: 280px;
+    }
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+
+@media print {
+    .docker-yaml-editor {
+        border: 1px solid #ccc;
+    }
+
+    .dye-textarea {
+        display: none;
+    }
+
+    .dye-resize-handle {
+        display: none;
+    }
+
+    .dye-highlight-layer {
+        overflow: visible;
+        height: auto;
+    }
+}
